@@ -1,5 +1,8 @@
-require("@nomiclabs/hardhat-waffle");
-require("hardhat-gas-reporter");
+import "@nomiclabs/hardhat-waffle";
+import "hardhat-gas-reporter";
+import '@typechain/hardhat'
+import '@nomiclabs/hardhat-ethers'
+import '@nomiclabs/hardhat-waffle'
 
 /**
  * @type import('hardhat/config').HardhatUserConfig

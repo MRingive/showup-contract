@@ -1,12 +1,15 @@
-const { expect } = require("chai");
+import { ethers } from "hardhat";
+import { Signer } from "ethers";
+import { ShowUpClub } from "../typechain-types";
+import { expect } from 'chai'
 
 describe("ShowUpClub contract", function () {
 
     let ShowUpClub;
-    let hardhatShowUpClub;
-    let owner;
-    let addr1;
-    let addr2;
+    let hardhatShowUpClub: ShowUpClub;
+    let owner: { address: any; };
+    let addr1: Signer;
+    let addr2: Signer;
     let addrs;
 
     const journeyA = {
@@ -204,7 +207,4 @@ describe("ShowUpClub contract", function () {
             .to.emit(hardhatShowUpClub, 'AttemptCreated')
             .withArgs(owner.address, 0);
     });
-
-    
-
   });
