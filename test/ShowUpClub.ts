@@ -36,6 +36,17 @@ describe("ShowUpClub contract", function () {
         hardhatShowUpClub = await ShowUpClub.deploy();
     });
 
+    async function createJourneyA() {
+        await hardhatShowUpClub.createJourney(
+            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
+        )
+    }
+
+    async function createJourneyB() {
+        await hardhatShowUpClub.createJourney(
+            journeyB.action, journeyB.format, journeyB.duration, journeyB.dailyValue, journeyB.description
+        )
+    }
     
     it("should create journey and emit", async function () {
         await expect(hardhatShowUpClub.createJourney(
@@ -206,5 +217,34 @@ describe("ShowUpClub contract", function () {
         await expect(hardhatShowUpClub.createAttempt(1))
             .to.emit(hardhatShowUpClub, 'AttemptCreated')
             .withArgs(owner.address, 0);
+    });
+
+    it("should create attempt and get end date", async function () {
+        await createJourneyA();
+
+        await hardhatShowUpClub.createAttempt(0);
+
+        const endDate = await hardhatShowUpClub.getAttemptEndDate(0, 0);
+
+        const latestBlock = await ethers.provider.getBlock("latest")
+
+        expect(endDate).to.equal(latestBlock.timestamp + journeyA.duration);
+    });
+
+    it("should have different end dates", async function () {
+        await createJourneyA();
+        await createJourneyB();
+
+        await hardhatShowUpClub.createAttempt(0);
+        const latestBlockA = await ethers.provider.getBlock("latest");
+
+        await hardhatShowUpClub.createAttempt(1);
+        const latestBlockB = await ethers.provider.getBlock("latest");
+
+        const endDateA = await hardhatShowUpClub.getAttemptEndDate(0, 0);
+        const endDateB = await hardhatShowUpClub.getAttemptEndDate(1, 0);
+
+        expect(endDateA).to.equal(latestBlockA.timestamp + journeyA.duration, "Attempt A date");
+        expect(endDateB).to.equal(latestBlockB.timestamp + journeyB.duration, "Attempt B date");
     });
   });
