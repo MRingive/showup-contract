@@ -8,7 +8,6 @@ contract ShowUpClub {
     enum Action { Run, Walk, WorkOnAProject, Write, Program, WorkOut }
     enum Format { Minutes, Kilometers, Miles, Times }
 
-    // TODO: need user addr
     struct Attempt {
         uint startDate;
         address creator;
@@ -37,7 +36,6 @@ contract ShowUpClub {
 
     // TODO: how can a user find their attempts? (e.g., if it is a journey the user has not created)
     // Addr -> journeyId -> attempts for that journey
-    // TODO: 
 
     /// Journey does not exists.
     error JourneyDoesNotExist();
@@ -50,7 +48,8 @@ contract ShowUpClub {
         uint duration,
         uint dailyValue,
         string calldata description) external {
-        Journey memory journey = Journey({ // See if push directly saves gas?
+        // TODO See if push directly saves gas?
+        Journey memory journey = Journey({ 
             action: action,
             format: format,
             duration: duration,
@@ -83,16 +82,9 @@ contract ShowUpClub {
         journeyIds_ = userJourneys[msg.sender];
     }
 
-    // Create attempt.
-    // Private.
-    // Use a journey id and use the journey duration to compute endDate
-    // should user pass in startTime ? Just assert that it is not in the past?
-    // (this could be tricky as a transaction can take a bit to mine so it will end up in the past)
-    // You should not be able to set start time... user can just set start time in the past and then quickly complete a long
-    // journey.
-    // startTime = blockTime. to make it simple starting out.
-    
     function createAttempt(uint journeyId) external {
+        // TODO should you only be allowed the have one attempt running pr. journey? Or does this not matter?
+        
         if (journeys.length < journeyId + 1)
             revert JourneyDoesNotExist();
 
