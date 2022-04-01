@@ -165,6 +165,61 @@ describe("ShowUpClub contract", function () {
         expect(journeysAddr2.length).to.equal(0);
     });
 
+    it("should get journey ids for user", async function () {
+        await hardhatShowUpClub.createJourney(
+            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
+        );
+        await hardhatShowUpClub.createJourney(
+            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
+        );
+  
+        const journeys = await hardhatShowUpClub.getJourneyIdsForUser(owner.address);
+
+        expect(journeys.length).to.equal(2);
+        expect(journeys[0]).to.equal(0);
+        expect(journeys[1]).to.equal(1);
+    });
+
+    it("should not get journey ids for different user", async function () {
+        await hardhatShowUpClub.createJourney(
+            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
+        );
+        await hardhatShowUpClub.createJourney(
+            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
+        );
+  
+        const journeys = await hardhatShowUpClub.getJourneyIdsForUser(await addr1.getAddress());
+
+        expect(journeys.length).to.equal(0);
+    });
+
+    it("should get journey ids for different users", async function () {
+        await hardhatShowUpClub.createJourney(
+            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
+        );
+        await hardhatShowUpClub.connect(addr1).createJourney(
+            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
+        );
+        await hardhatShowUpClub.createJourney(
+            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
+        );
+  
+        const journeys = await hardhatShowUpClub.getJourneyIdsForUser(owner.address);
+
+        expect(journeys.length).to.equal(2);
+        expect(journeys[0]).to.equal(0);
+        expect(journeys[1]).to.equal(2);
+
+        const journeysAddr1 = await hardhatShowUpClub.getJourneyIdsForUser(await addr1.getAddress());
+
+        expect(journeysAddr1.length).to.equal(1);
+        expect(journeysAddr1[0]).to.equal(1);
+
+        const journeysAddr2 = await hardhatShowUpClub.getJourneyIdsForUser(await addr2.getAddress());
+        
+        expect(journeysAddr2.length).to.equal(0);
+    });
+
     it("should fail to create attempt with no journey", async function () {
         await expect(hardhatShowUpClub.createAttempt(0)).to.be.reverted
     });

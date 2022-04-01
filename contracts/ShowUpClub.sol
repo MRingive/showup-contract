@@ -22,8 +22,8 @@ contract ShowUpClub {
         address creator;    // Journey Creator.
     }
 
-    event JourneyCreated(address creator, uint id);
-    event AttemptCreated(address creator, uint id);
+    event JourneyCreated(address indexed creator, uint id);
+    event AttemptCreated(address indexed creator, uint id);
 
     // All Journeys
     Journey[] public journeys;
@@ -80,6 +80,12 @@ contract ShowUpClub {
         returns (uint[] memory journeyIds_)
     {
         journeyIds_ = userJourneys[msg.sender];
+    }
+
+    function getJourneyIdsForUser(address creator) external view
+        returns (uint[] memory journeyIds_)
+    {
+        journeyIds_ = userJourneys[creator];
     }
 
     function createAttempt(uint journeyId) external {
