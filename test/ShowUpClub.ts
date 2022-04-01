@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
 import { Signer } from "ethers";
 import { ShowUpClub } from "../typechain-types";
 import { expect } from 'chai'
@@ -76,12 +76,15 @@ describe("ShowUpClub contract", function () {
         );
   
         const journey = await hardhatShowUpClub.getJourney(0);
+
+        const latestBlock = await ethers.provider.getBlock("latest");
   
         expect(journey.action, "Action").to.equal(journeyA.action);
         expect(journey.format, "Format").to.equal(journeyA.format);
         expect(journey.duration, "Duration").to.equal(journeyA.duration);
         expect(journey.dailyValue, "Daily value").to.equal(journeyA.dailyValue);
         expect(journey.description, "Description").to.equal(journeyA.description);
+        expect(journey.startDate, "Start Date").to.equal(latestBlock.timestamp);
         expect(journey.creator).to.equal(owner.address);
     });
 
@@ -89,9 +92,14 @@ describe("ShowUpClub contract", function () {
         await hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
         );
+
+        const latestBlockA = await ethers.provider.getBlock("latest");
+
         await hardhatShowUpClub.createJourney(
             journeyB.action, journeyB.format, journeyB.duration, journeyB.dailyValue, journeyB.description
         );
+
+        const latestBlockB = await ethers.provider.getBlock("latest");
   
         const journeyResultA = await hardhatShowUpClub.getJourney(0);
         const journeyResultB = await hardhatShowUpClub.getJourney(1);
@@ -101,6 +109,7 @@ describe("ShowUpClub contract", function () {
         expect(journeyResultA.duration, "Duration").to.equal(journeyA.duration);
         expect(journeyResultA.dailyValue, "Daily value").to.equal(journeyA.dailyValue);
         expect(journeyResultA.description, "Description").to.equal(journeyA.description);
+        expect(journeyResultA.startDate, "Start Date").to.equal(latestBlockA.timestamp);
         expect(journeyResultA.creator).to.equal(owner.address);
 
         expect(journeyResultB.action, "Action").to.equal(journeyB.action);
@@ -108,6 +117,7 @@ describe("ShowUpClub contract", function () {
         expect(journeyResultB.duration, "Duration").to.equal(journeyB.duration);
         expect(journeyResultB.dailyValue, "Daily value").to.equal(journeyB.dailyValue);
         expect(journeyResultB.description, "Description").to.equal(journeyB.description);
+        expect(journeyResultB.startDate, "Start Date").to.equal(latestBlockB.timestamp);
         expect(journeyResultB.creator).to.equal(owner.address);
     });
 
@@ -220,86 +230,92 @@ describe("ShowUpClub contract", function () {
         expect(journeysAddr2.length).to.equal(0);
     });
 
-    it("should fail to create attempt with no journey", async function () {
-        await expect(hardhatShowUpClub.createAttempt(0)).to.be.reverted
-    });
+    describe("Show Up", function () {
 
-    it("should fail to create attempt with no journey for id 1", async function () {
-        await hardhatShowUpClub.createJourney(
-            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
-        );
+        it("should revert for journey not there", async () => {
+            await expect(hardhatShowUpClub.showUp(0, 25, "a note?")).to.be.reverted
+        }) 
 
-        await expect(hardhatShowUpClub.createAttempt(1)).to.be.reverted
-    });
+        it("should revert for different user than creator", async () => {
+            await createJourneyA()
 
-    it("should create attempt", async function () {
-        await hardhatShowUpClub.createJourney(
-            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
-        );
+            await expect(hardhatShowUpClub.connect(addr1).showUp(0, 25, "a note?")).to.be.reverted
+        })
 
-        await expect(hardhatShowUpClub.createAttempt(0))
-            .to.emit(hardhatShowUpClub, 'AttemptCreated')
-            .withArgs(owner.address, 0);
-    });
+        it("should not revert if journey has not ended", async () => {
+            await createJourneyA()
 
-    it("should create two attempts", async function () {
-        await hardhatShowUpClub.createJourney(
-            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
-        );
+            const latestBlockB = await ethers.provider.getBlock("latest");
 
-        await expect(hardhatShowUpClub.createAttempt(0))
-            .to.emit(hardhatShowUpClub, 'AttemptCreated')
-            .withArgs(owner.address, 0);
+            await ethers.provider.send("evm_mine", [latestBlockB.timestamp + journeyA.duration - 1]);
 
-        await expect(hardhatShowUpClub.createAttempt(0))
-            .to.emit(hardhatShowUpClub, 'AttemptCreated')
-            .withArgs(owner.address, 1);
-    });
+            await hardhatShowUpClub.showUp(0, 25, "a note?")
+        })
 
-    it("should create attempts for different journeys", async function () {
-        await hardhatShowUpClub.createJourney(
-            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
-        );
+        it("should revert if journey has ended", async () => {
+            await createJourneyA()
 
-        await hardhatShowUpClub.createJourney(
-            journeyA.action, journeyA.format, journeyA.duration, journeyA.dailyValue, journeyA.description
-        );
+            const latestBlockB = await ethers.provider.getBlock("latest");
 
-        await expect(hardhatShowUpClub.createAttempt(0))
-            .to.emit(hardhatShowUpClub, 'AttemptCreated')
-            .withArgs(owner.address, 0);
+            await ethers.provider.send("evm_mine", [latestBlockB.timestamp + journeyA.duration]);
 
-        await expect(hardhatShowUpClub.createAttempt(1))
-            .to.emit(hardhatShowUpClub, 'AttemptCreated')
-            .withArgs(owner.address, 0);
-    });
+            await expect(hardhatShowUpClub.showUp(0, 25, "a note?")).to.be.reverted
+        })
 
-    it("should create attempt and get end date", async function () {
-        await createJourneyA();
+        it("should change journey value", async () => {
+            await createJourneyA()
 
-        await hardhatShowUpClub.createAttempt(0);
+            const journeyBefore = await hardhatShowUpClub.getJourney(0)
 
-        const endDate = await hardhatShowUpClub.getAttemptEndDate(0, 0);
+            expect(journeyBefore.currentValue).to.equal(0)
 
-        const latestBlock = await ethers.provider.getBlock("latest")
+            await hardhatShowUpClub.showUp(0, 25, "a note?")
 
-        expect(endDate).to.equal(latestBlock.timestamp + journeyA.duration);
-    });
+            const journeyAfter =  await hardhatShowUpClub.getJourney(0)
 
-    it("should have different end dates", async function () {
-        await createJourneyA();
-        await createJourneyB();
+            expect(journeyAfter.currentValue).to.equal(25)
+        })
 
-        await hardhatShowUpClub.createAttempt(0);
-        const latestBlockA = await ethers.provider.getBlock("latest");
+        it("should change journey value multiple times", async () => {
+            await createJourneyA()
 
-        await hardhatShowUpClub.createAttempt(1);
-        const latestBlockB = await ethers.provider.getBlock("latest");
+            const journeyBefore = await hardhatShowUpClub.getJourney(0)
 
-        const endDateA = await hardhatShowUpClub.getAttemptEndDate(0, 0);
-        const endDateB = await hardhatShowUpClub.getAttemptEndDate(1, 0);
+            expect(journeyBefore.currentValue).to.equal(0)
 
-        expect(endDateA).to.equal(latestBlockA.timestamp + journeyA.duration, "Attempt A date");
-        expect(endDateB).to.equal(latestBlockB.timestamp + journeyB.duration, "Attempt B date");
+            await hardhatShowUpClub.showUp(0, 25, "a note?")
+
+            const journeyAfter =  await hardhatShowUpClub.getJourney(0)
+
+            expect(journeyAfter.currentValue).to.equal(25)
+
+            await hardhatShowUpClub.showUp(0, 30, "another note?")
+
+            const journeyAfterAgain =  await hardhatShowUpClub.getJourney(0)
+
+            expect(journeyAfterAgain.currentValue).to.equal(55)
+        })
+
+        it("should emit event", async function () {
+            await createJourneyA()
+
+            await expect(hardhatShowUpClub.showUp(0, 25, "a note?"))
+            .to.emit(hardhatShowUpClub, 'ShowUp')
+            .withArgs(0, 25, "a note?");
+        });
+
+        it("should emit events", async function () {
+            await createJourneyA()
+            await createJourneyB()
+
+            await expect(hardhatShowUpClub.showUp(0, 25, "a note?"))
+            .to.emit(hardhatShowUpClub, 'ShowUp')
+            .withArgs(0, 25, "a note?");
+
+            await expect(hardhatShowUpClub.showUp(1, 30, "another note?"))
+            .to.emit(hardhatShowUpClub, 'ShowUp')
+            .withArgs(1, 30, "another note?");
+        });
+
     });
   });

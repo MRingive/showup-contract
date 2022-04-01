@@ -8,11 +8,6 @@ contract ShowUpClub {
     enum Action { Run, Walk, WorkOnAProject, Write, Program, WorkOut }
     enum Format { Minutes, Kilometers, Miles, Times }
 
-    struct Attempt {
-        uint startDate;
-        address creator;
-    }
-
     struct Journey {
         Action action;      // Action.
         Format format;      // Format.
@@ -20,10 +15,12 @@ contract ShowUpClub {
         uint dailyValue;    // Daily value. E.g, 20
         string description; // Description of the journey.
         address creator;    // Journey Creator.
+        uint startDate;     // Start date.
+        uint currentValue;  // Current value.
     }
 
     event JourneyCreated(address indexed creator, uint id);
-    event AttemptCreated(address indexed creator, uint id);
+    event ShowUp(uint indexed journeyId, uint value, string note);
 
     // All Journeys
     Journey[] public journeys;
@@ -31,14 +28,17 @@ contract ShowUpClub {
     // Map from address to journey ids. 
     mapping(address => uint[]) userJourneys;
 
-    // Journey Id to Attempts
-    mapping(uint => Attempt[]) attempts;
+    // Journey Id to ShowUps
+    //mapping(uint => ShowUp[]) showups;
 
-    // TODO: how can a user find their attempts? (e.g., if it is a journey the user has not created)
-    // Addr -> journeyId -> attempts for that journey
-
-    /// Journey does not exists.
+    /// Journey does not exist.
     error JourneyDoesNotExist();
+
+    /// Sender did not create journey.
+    error NotCreatorOfJourney();
+
+    /// Journey ended.
+    error JourneyEnded();
 
     constructor() {} // TODO? 
 
@@ -55,7 +55,9 @@ contract ShowUpClub {
             duration: duration,
             dailyValue: dailyValue,
             description: description,
-            creator: msg.sender
+            creator: msg.sender,
+            startDate: block.timestamp,
+            currentValue: 0
         });
 
         journeys.push(journey);
@@ -88,26 +90,23 @@ contract ShowUpClub {
         journeyIds_ = userJourneys[creator];
     }
 
-    function createAttempt(uint journeyId) external {
-        // TODO should you only be allowed the have one attempt running pr. journey? Or does this not matter?
-        
-        if (journeys.length < journeyId + 1)
-            revert JourneyDoesNotExist();
+    function showUp(uint journeyId, uint value, string calldata note) external {
+        Journey storage journey = journeys[journeyId];
+        if (journey.creator != msg.sender)
+            revert NotCreatorOfJourney();
 
-        attempts[journeyId].push(Attempt({
-            startDate: block.timestamp,
-            creator: msg.sender
-        }));
+        uint journeyEndDate = getJourneyEndDate(journeyId);
+        if (journeyEndDate < block.timestamp)
+            revert JourneyEnded();
 
-        emit AttemptCreated(msg.sender, attempts[journeyId].length - 1);
+        journey.currentValue = journey.currentValue + value;
+        emit ShowUp(journeyId, value, note);
     }
 
-    function getAttemptEndDate(uint journeyId, uint attemptId) external view
+    function getJourneyEndDate(uint journeyId) internal view
         returns (uint endDate_)
     {
         Journey memory journey = getJourneyInternal(journeyId);
-        Attempt memory attempt = attempts[journeyId][attemptId];
-
-        endDate_ = attempt.startDate + journey.duration;
+        endDate_ = journey.startDate + journey.duration;
     }
 }
