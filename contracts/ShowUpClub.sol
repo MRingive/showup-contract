@@ -142,21 +142,8 @@ contract ShowUpClub is PullPayment {
     {
         durationInDays_ = journey.duration * 1 days;
     }
-
-
-    /*
-    // Setup graph index so we can track:
-    // Journeys ended but not completed.
-        // This can be queried if we have journey data and current block nr. 
-        // We just need journeys whose end date is past.
-    // Journeys completed but not paid. <--- how to track this?
-        // Journey can be marked completed once it is past due date.
-        // How do we find journeys past due date?
-            One way could maybe be to create an entiry with "id" being the end date + journey id.
-            For each block we then look up using block time and journey id (for all journeys!)
-    */
-
-    // TODO: consider that this method may be target for automation. I.e, I call it for completed journeys.
+    
+    // TODO: test we get money after async transfer
     function completeJourney(uint journeyId) public {
         uint journeyEndDate = getJourneyEndDate(journeyId); // TODO: is it cheaper to use the storage journey?
         if (journeyEndDate >= block.timestamp)
