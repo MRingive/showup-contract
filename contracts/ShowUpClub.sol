@@ -7,12 +7,9 @@ import "@openzeppelin/contracts/security/PullPayment.sol";
 /// @title The Show Up Club.
 contract ShowUpClub is PullPayment {
 
-    enum Action { Run, Walk, WorkOnAProject, Write, Program, WorkOut }
-    enum Format { Minutes, Kilometers, Miles, Times }
-
     struct Journey {
-        Action action;      // Action.
-        Format format;      // Format.
+        string action;      // Action.
+        string format;      // Format.
         uint duration;      // Duration in days.
         uint dailyValue;    // Daily value. E.g, 20
         string description; // Description of the journey.
@@ -56,8 +53,8 @@ contract ShowUpClub is PullPayment {
     constructor() {} // TODO?
 
     function createJourney(
-        Action action,
-        Format format,
+        string calldata action,
+        string calldata format,
         uint duration,
         uint dailyValue,
         string calldata description,
@@ -66,8 +63,8 @@ contract ShowUpClub is PullPayment {
     }
 
     function _createJourney(
-        Action action,
-        Format format,
+        string calldata action,
+        string calldata format,
         uint duration,
         uint dailyValue,
         string calldata description,

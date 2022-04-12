@@ -13,8 +13,8 @@ describe("ShowUpClub contract", function () {
     let addrs;
 
     const journeyA = {
-        action: 1,
-        format: 2,
+        action: "ActionA",
+        format: "FormatA",
         duration: 3,
         dailyValue: 4,
         description: "A",
@@ -22,8 +22,8 @@ describe("ShowUpClub contract", function () {
     }
 
     const journeyB = {
-        action: 5,
-        format: 3,
+        action: "ActionB",
+        format: "FormatB",
         duration: 7,
         dailyValue: 8,
         description: "B",
@@ -81,20 +81,6 @@ describe("ShowUpClub contract", function () {
         await expect(hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
             journeyA.dailyValue, journeyA.description, "abcde"
-        )).to.be.reverted
-    });
-
-    it("should not create for invalid action", async function () {
-        await expect(hardhatShowUpClub.createJourney(
-            29229, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.charity
-        )).to.be.reverted
-    });
-
-    it("should not create for invalid format", async function () {
-        await expect(hardhatShowUpClub.createJourney(
-            journeyA.action, 133777777, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.charity
         )).to.be.reverted
     });
 
