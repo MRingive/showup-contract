@@ -18,7 +18,7 @@ describe("ShowUpClub contract", function () {
         duration: 3,
         dailyValue: 4,
         description: "A",
-        charity: "0x2Fa4C9EA2c8E7778bEF5dE33b0E5838f12606A02"
+        sink: "0x2Fa4C9EA2c8E7778bEF5dE33b0E5838f12606A02"
     }
 
     const journeyB = {
@@ -27,7 +27,7 @@ describe("ShowUpClub contract", function () {
         duration: 7,
         dailyValue: 8,
         description: "B",
-        charity: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+        sink: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
     }
 
     beforeEach(async function () {
@@ -41,21 +41,21 @@ describe("ShowUpClub contract", function () {
     async function createJourneyA() {
         await hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.charity
+            journeyA.dailyValue, journeyA.description, journeyA.sink
         )
     }
 
     async function createJourneyB() {
         await hardhatShowUpClub.createJourney(
             journeyB.action, journeyB.format, journeyB.duration,
-            journeyB.dailyValue, journeyB.description, journeyB.charity
+            journeyB.dailyValue, journeyB.description, journeyB.sink
         )
     }
     
     it("should create journey and emit", async function () {
         await expect(hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.charity
+            journeyA.dailyValue, journeyA.description, journeyA.sink
         ))
         .to.emit(hardhatShowUpClub, 'JourneyCreated')
         .withArgs(owner.address, 0);
@@ -64,20 +64,20 @@ describe("ShowUpClub contract", function () {
     it("should create two journeys and emit", async function () {
         await expect(hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.charity
+            journeyA.dailyValue, journeyA.description, journeyA.sink
         ))
         .to.emit(hardhatShowUpClub, 'JourneyCreated')
         .withArgs(owner.address, 0);
 
         await expect(hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.charity
+            journeyA.dailyValue, journeyA.description, journeyA.sink
         ))
         .to.emit(hardhatShowUpClub, 'JourneyCreated')
         .withArgs(owner.address, 1);
     });
 
-    it("should not create for invalid charity address", async function () {
+    it("should not create for invalid sink address", async function () {
         await expect(hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
             journeyA.dailyValue, journeyA.description, "abcde"
@@ -97,7 +97,7 @@ describe("ShowUpClub contract", function () {
         expect(journey.dailyValue, "Daily value").to.equal(journeyA.dailyValue);
         expect(journey.description, "Description").to.equal(journeyA.description);
         expect(journey.creator).to.equal(owner.address);
-        expect(journey.charity).to.equal(journeyA.charity);
+        expect(journey.sink).to.equal(journeyA.sink);
         expect(journey.startDate, "Start Date").to.equal(latestBlock.timestamp);
         expect(journey.currentValue, "Current Value").to.equal(0);
         expect(journey.fundsLocked, "Funds locked").to.equal(0);
@@ -121,7 +121,7 @@ describe("ShowUpClub contract", function () {
         expect(journeyResultA.dailyValue, "Daily value").to.equal(journeyA.dailyValue);
         expect(journeyResultA.description, "Description").to.equal(journeyA.description);
         expect(journeyResultA.creator).to.equal(owner.address);
-        expect(journeyResultA.charity).to.equal(journeyA.charity);
+        expect(journeyResultA.sink).to.equal(journeyA.sink);
         expect(journeyResultA.startDate, "Start Date").to.equal(latestBlockA.timestamp);
         expect(journeyResultA.currentValue, "Current Value").to.equal(0);
         expect(journeyResultA.fundsLocked, "Funds locked").to.equal(0);
@@ -132,7 +132,7 @@ describe("ShowUpClub contract", function () {
         expect(journeyResultB.dailyValue, "Daily value").to.equal(journeyB.dailyValue);
         expect(journeyResultB.description, "Description").to.equal(journeyB.description);
         expect(journeyResultB.creator).to.equal(owner.address);
-        expect(journeyResultB.charity).to.equal(journeyB.charity);
+        expect(journeyResultB.sink).to.equal(journeyB.sink);
         expect(journeyResultB.startDate, "Start Date").to.equal(latestBlockB.timestamp);
         expect(journeyResultB.currentValue, "Current Value").to.equal(0);
         expect(journeyResultB.fundsLocked, "Funds locked").to.equal(0);
@@ -163,7 +163,7 @@ describe("ShowUpClub contract", function () {
         await createJourneyA()
         await hardhatShowUpClub.connect(addr1).createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.charity
+            journeyA.dailyValue, journeyA.description, journeyA.sink
         );
         await createJourneyA()
   
@@ -207,7 +207,7 @@ describe("ShowUpClub contract", function () {
         await createJourneyA()
         await hardhatShowUpClub.connect(addr1).createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.charity
+            journeyA.dailyValue, journeyA.description, journeyA.sink
         );
         await createJourneyA()
   
@@ -368,10 +368,10 @@ describe("ShowUpClub contract", function () {
             await expect(hardhatShowUpClub.completeJourney(0)).to.be.reverted
         });
 
-        it("should provide money to charity address if journey failed", async () => {
+        it("should provide money to sink address if journey failed", async () => {
             await hardhatShowUpClub.createJourney(
                 journeyA.action, journeyA.format, journeyA.duration,
-                journeyA.dailyValue, journeyA.description, journeyA.charity,
+                journeyA.dailyValue, journeyA.description, journeyA.sink,
                 { value: 123 }
             )
 
@@ -382,7 +382,7 @@ describe("ShowUpClub contract", function () {
 
             await hardhatShowUpClub.completeJourney(0)
 
-            const fundsForCharity = await hardhatShowUpClub.payments(journeyA.charity)
+            const fundsForCharity = await hardhatShowUpClub.payments(journeyA.sink)
             const fundsForCreator = await hardhatShowUpClub.payments(owner.address)
             
             expect(fundsForCharity).to.equal(123)
@@ -392,7 +392,7 @@ describe("ShowUpClub contract", function () {
         it("should provide money to creator address if journey succeeded", async () => {
             await hardhatShowUpClub.createJourney(
                 journeyA.action, journeyA.format, journeyA.duration,
-                journeyA.dailyValue, journeyA.description, journeyA.charity,
+                journeyA.dailyValue, journeyA.description, journeyA.sink,
                 { value: 123 }
             )
 
@@ -403,7 +403,7 @@ describe("ShowUpClub contract", function () {
 
             await hardhatShowUpClub.completeJourney(0)
 
-            const fundsForCharity = await hardhatShowUpClub.payments(journeyA.charity)
+            const fundsForCharity = await hardhatShowUpClub.payments(journeyA.sink)
             const fundsForCreator = await hardhatShowUpClub.payments(owner.address)
             
             expect(fundsForCharity).to.equal(0)

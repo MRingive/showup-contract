@@ -14,7 +14,7 @@ contract ShowUpClub is PullPayment {
         uint dailyValue;    // Daily value. E.g, 20
         string description; // Description of the journey.
         address creator;    // Journey Creator.
-        address charity;    // Charity Address.
+        address sink;       // Sink Address.
         uint startDate;     // Start date.
         uint currentValue;  // Current value.
         uint fundsLocked;   // Funds locked.
@@ -58,8 +58,8 @@ contract ShowUpClub is PullPayment {
         uint duration,
         uint dailyValue,
         string calldata description,
-        address charity) external payable {
-            _createJourney(action, format, duration, dailyValue, description, charity);
+        address sink) external payable {
+            _createJourney(action, format, duration, dailyValue, description, sink);
     }
 
     function _createJourney(
@@ -68,7 +68,7 @@ contract ShowUpClub is PullPayment {
         uint duration,
         uint dailyValue,
         string calldata description,
-        address charity) internal {
+        address sink) internal {
         Journey memory journey = Journey({ 
             action: action,
             format: format,
@@ -76,7 +76,7 @@ contract ShowUpClub is PullPayment {
             dailyValue: dailyValue,
             description: description,
             creator: msg.sender,
-            charity: charity,
+            sink: sink,
             startDate: block.timestamp,
             currentValue: 0,
             fundsLocked: msg.value,
@@ -158,7 +158,7 @@ contract ShowUpClub is PullPayment {
         if (success) {
             _asyncTransfer(journey.creator, journey.fundsLocked);
         } else {
-            _asyncTransfer(journey.charity, journey.fundsLocked);
+            _asyncTransfer(journey.sink, journey.fundsLocked);
         }
         
         emit JourneyCompleted(journeyId);
