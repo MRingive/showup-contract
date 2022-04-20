@@ -69,7 +69,6 @@ contract ShowUpClub is PullPayment {
         uint dailyValue,
         string calldata description,
         address charity) internal {
-        // TODO See if push directly saves gas?
         Journey memory journey = Journey({ 
             action: action,
             format: format,
