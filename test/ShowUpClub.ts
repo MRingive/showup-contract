@@ -100,7 +100,7 @@ describe("ShowUpClub contract", function () {
         expect(journey.sink).to.equal(journeyA.sink);
         expect(journey.startDate, "Start Date").to.equal(latestBlock.timestamp);
         expect(journey.currentValue, "Current Value").to.equal(0);
-        expect(journey.fundsLocked, "Funds locked").to.equal(0);
+        expect(journey.deposit, "Deposit").to.equal(0);
     });
 
     it("should create and get two journeys", async function () {
@@ -124,7 +124,7 @@ describe("ShowUpClub contract", function () {
         expect(journeyResultA.sink).to.equal(journeyA.sink);
         expect(journeyResultA.startDate, "Start Date").to.equal(latestBlockA.timestamp);
         expect(journeyResultA.currentValue, "Current Value").to.equal(0);
-        expect(journeyResultA.fundsLocked, "Funds locked").to.equal(0);
+        expect(journeyResultA.deposit, "Deposit").to.equal(0);
 
         expect(journeyResultB.action, "Action").to.equal(journeyB.action);
         expect(journeyResultB.format, "Format").to.equal(journeyB.format);
@@ -135,7 +135,7 @@ describe("ShowUpClub contract", function () {
         expect(journeyResultB.sink).to.equal(journeyB.sink);
         expect(journeyResultB.startDate, "Start Date").to.equal(latestBlockB.timestamp);
         expect(journeyResultB.currentValue, "Current Value").to.equal(0);
-        expect(journeyResultB.fundsLocked, "Funds locked").to.equal(0);
+        expect(journeyResultB.deposit, "Deposit").to.equal(0);
     });
 
 

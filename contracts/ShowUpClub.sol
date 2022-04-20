@@ -17,7 +17,7 @@ contract ShowUpClub is PullPayment {
         address sink;       // Sink Address.
         uint startDate;     // Start date.
         uint currentValue;  // Current value.
-        uint fundsLocked;   // Funds locked.
+        uint deposit;       // Deposit.
         bool completed;     // Completed.
     }
 
@@ -79,7 +79,7 @@ contract ShowUpClub is PullPayment {
             sink: sink,
             startDate: block.timestamp,
             currentValue: 0,
-            fundsLocked: msg.value,
+            deposit: msg.value,
             completed: false
         });
 
@@ -156,9 +156,9 @@ contract ShowUpClub is PullPayment {
         bool success = journey.currentValue >= totalValueRequired;
 
         if (success) {
-            _asyncTransfer(journey.creator, journey.fundsLocked);
+            _asyncTransfer(journey.creator, journey.deposit);
         } else {
-            _asyncTransfer(journey.sink, journey.fundsLocked);
+            _asyncTransfer(journey.sink, journey.deposit);
         }
         
         emit JourneyCompleted(journeyId);
