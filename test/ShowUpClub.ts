@@ -1,4 +1,4 @@
-import { ethers, network } from "hardhat";
+import { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { ShowUpClub } from "../typechain-types";
 import { expect } from 'chai'
@@ -18,7 +18,8 @@ describe("ShowUpClub contract", function () {
         duration: 3,
         dailyValue: 4,
         description: "A",
-        sink: "0x2Fa4C9EA2c8E7778bEF5dE33b0E5838f12606A02"
+        sink: "0x2Fa4C9EA2c8E7778bEF5dE33b0E5838f12606A02",
+        fee: 0
     }
 
     const journeyB = {
@@ -27,7 +28,8 @@ describe("ShowUpClub contract", function () {
         duration: 7,
         dailyValue: 8,
         description: "B",
-        sink: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+        sink: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+        fee: 1
     }
 
     beforeEach(async function () {
@@ -41,21 +43,24 @@ describe("ShowUpClub contract", function () {
     async function createJourneyA() {
         await hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.sink
+            journeyA.dailyValue, journeyA.description, journeyA.sink,
+            journeyA.fee
         )
     }
 
     async function createJourneyB() {
         await hardhatShowUpClub.createJourney(
             journeyB.action, journeyB.format, journeyB.duration,
-            journeyB.dailyValue, journeyB.description, journeyB.sink
+            journeyB.dailyValue, journeyB.description, journeyB.sink,
+            journeyB.fee, { value: 1 }
         )
     }
     
     it("should create journey and emit", async function () {
         await expect(hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.sink
+            journeyA.dailyValue, journeyA.description, journeyA.sink,
+            journeyA.fee
         ))
         .to.emit(hardhatShowUpClub, 'JourneyCreated')
         .withArgs(owner.address, 0);
@@ -64,14 +69,16 @@ describe("ShowUpClub contract", function () {
     it("should create two journeys and emit", async function () {
         await expect(hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.sink
+            journeyA.dailyValue, journeyA.description, journeyA.sink,
+            journeyA.fee
         ))
         .to.emit(hardhatShowUpClub, 'JourneyCreated')
         .withArgs(owner.address, 0);
 
         await expect(hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.sink
+            journeyA.dailyValue, journeyA.description, journeyA.sink,
+            journeyA.fee
         ))
         .to.emit(hardhatShowUpClub, 'JourneyCreated')
         .withArgs(owner.address, 1);
@@ -80,7 +87,16 @@ describe("ShowUpClub contract", function () {
     it("should not create for invalid sink address", async function () {
         await expect(hardhatShowUpClub.createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, "abcde"
+            journeyA.dailyValue, journeyA.description, "abcde",
+            journeyA.fee
+        )).to.be.reverted
+    });
+
+    it("should not create with fee more than deposit", async function () {
+        await expect(hardhatShowUpClub.createJourney(
+            journeyA.action, journeyA.format, journeyA.duration,
+            journeyA.dailyValue, journeyA.description, journeyA.sink,
+            200, {value: 199}
         )).to.be.reverted
     });
 
@@ -101,6 +117,17 @@ describe("ShowUpClub contract", function () {
         expect(journey.startDate, "Start Date").to.equal(latestBlock.timestamp);
         expect(journey.currentValue, "Current Value").to.equal(0);
         expect(journey.deposit, "Deposit").to.equal(0);
+    });
+
+    it("should create and get journey with deposit minus fee", async function () {
+        await hardhatShowUpClub.createJourney(
+            journeyB.action, journeyB.format, journeyB.duration,
+            journeyB.dailyValue, journeyB.description, journeyB.sink,
+            100, { value: 420 })
+  
+        const journey = await hardhatShowUpClub.getJourney(0);
+  
+        expect(journey.deposit, "Deposit").to.equal(320);
     });
 
     it("should create and get two journeys", async function () {
@@ -163,7 +190,8 @@ describe("ShowUpClub contract", function () {
         await createJourneyA()
         await hardhatShowUpClub.connect(addr1).createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.sink
+            journeyA.dailyValue, journeyA.description, journeyA.sink,
+            journeyA.fee
         );
         await createJourneyA()
   
@@ -207,7 +235,8 @@ describe("ShowUpClub contract", function () {
         await createJourneyA()
         await hardhatShowUpClub.connect(addr1).createJourney(
             journeyA.action, journeyA.format, journeyA.duration,
-            journeyA.dailyValue, journeyA.description, journeyA.sink
+            journeyA.dailyValue, journeyA.description, journeyA.sink,
+            journeyA.fee
         );
         await createJourneyA()
   
@@ -372,7 +401,7 @@ describe("ShowUpClub contract", function () {
             await hardhatShowUpClub.createJourney(
                 journeyA.action, journeyA.format, journeyA.duration,
                 journeyA.dailyValue, journeyA.description, journeyA.sink,
-                { value: 123 }
+                journeyA.fee, { value: 123 }
             )
 
             await hardhatShowUpClub.showUp(0, journeyA.dailyValue * journeyA.duration - 1, "a note?")
@@ -393,7 +422,7 @@ describe("ShowUpClub contract", function () {
             await hardhatShowUpClub.createJourney(
                 journeyA.action, journeyA.format, journeyA.duration,
                 journeyA.dailyValue, journeyA.description, journeyA.sink,
-                { value: 123 }
+                journeyA.fee, { value: 123 }
             )
 
             await hardhatShowUpClub.showUp(0, journeyA.dailyValue * journeyA.duration, "a note?")
@@ -438,9 +467,63 @@ describe("ShowUpClub contract", function () {
             .to.emit(hardhatShowUpClub, 'JourneyCompleted')
             .withArgs(1);
         });
-
-
     });
 
+
+    describe("Owner", () => {
+
+        it("should return owner", async () => {
+            const contractOwner = await hardhatShowUpClub.owner()
+            expect(contractOwner).to.equal(owner.address)
+        })
+
+        it("should transfer ownership", async () => {
+            const newAddress = await addr1.getAddress()
+            await hardhatShowUpClub.transferOwnership(newAddress)
+            
+            const contractOwner = await hardhatShowUpClub.owner()
+            expect(contractOwner).to.equal(newAddress)
+        })
+
+        it("should have funds after journey with fee created", async () => {
+            await createJourneyB()
+
+            const feeForOwner = await hardhatShowUpClub.payments(owner.address)
+            expect(feeForOwner).to.equal(journeyB.fee)
+        })
+
+        it("should not have funds after journey with no fee created", async () => {
+            await createJourneyA()
+
+            const feeForOwner = await hardhatShowUpClub.payments(owner.address)
+            expect(feeForOwner).to.equal(0)
+        })
+
+        it("should have more funds after journeys with fees created", async () => {
+            await createJourneyB()
+            await createJourneyB()
+            await createJourneyB()
+
+            const feeForOwner = await hardhatShowUpClub.payments(owner.address)
+
+            expect(feeForOwner).to.equal(3)
+        })
+
+        it("should have funds for different owners", async () => {
+            await createJourneyB()
+
+            const newAddress = await addr1.getAddress()
+            await hardhatShowUpClub.transferOwnership(newAddress)
+
+            await createJourneyB()
+            await createJourneyB()
+
+            const feeForOwner = await hardhatShowUpClub.payments(owner.address)
+            expect(feeForOwner).to.equal(1)
+            const feeForNewAddress = await hardhatShowUpClub.payments(newAddress)
+            expect(feeForNewAddress).to.equal(2)
+        })
+
+    })
 
   });

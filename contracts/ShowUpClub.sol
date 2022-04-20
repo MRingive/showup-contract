@@ -3,9 +3,10 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/security/PullPayment.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title The Show Up Club.
-contract ShowUpClub is PullPayment {
+contract ShowUpClub is PullPayment, Ownable {
 
     struct Journey {
         string action;      // Action.
@@ -58,8 +59,9 @@ contract ShowUpClub is PullPayment {
         uint duration,
         uint dailyValue,
         string calldata description,
-        address sink) external payable {
-            _createJourney(action, format, duration, dailyValue, description, sink);
+        address sink,
+        uint fee) external payable {
+            _createJourney(action, format, duration, dailyValue, description, sink, fee);
     }
 
     function _createJourney(
@@ -68,8 +70,9 @@ contract ShowUpClub is PullPayment {
         uint duration,
         uint dailyValue,
         string calldata description,
-        address sink) internal {
-        Journey memory journey = Journey({ 
+        address sink,
+        uint fee) internal {
+        Journey memory journey = Journey({
             action: action,
             format: format,
             duration: duration,
@@ -79,12 +82,14 @@ contract ShowUpClub is PullPayment {
             sink: sink,
             startDate: block.timestamp,
             currentValue: 0,
-            deposit: msg.value,
+            deposit: msg.value - fee,
             completed: false
         });
 
         journeys.push(journey);
         userJourneys[msg.sender].push(journeys.length - 1);
+
+        _asyncTransfer(owner(), fee);
 
         emit JourneyCreated(journey.creator, journeys.length - 1);
     }
@@ -139,7 +144,6 @@ contract ShowUpClub is PullPayment {
         durationInDays_ = journey.duration * 1 days;
     }
     
-    // TODO: test we get money after async transfer
     function completeJourney(uint journeyId) public {
         uint journeyEndDate = getJourneyEndDate(journeyId); // TODO: is it cheaper to use the storage journey?
         if (journeyEndDate >= block.timestamp)
