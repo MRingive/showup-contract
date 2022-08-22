@@ -1,2 +1,4 @@
-# showup-contract
-Smart contract for The Show Up Club
+# Showup Club Contract
+Smart contract for The Show Up Club.
+
+https://www.theshowup.club
